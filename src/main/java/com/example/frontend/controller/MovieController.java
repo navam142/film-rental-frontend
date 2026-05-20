@@ -106,6 +106,9 @@ public class MovieController {
         return "movie-rent";
     }
 
+    private static final java.util.regex.Pattern EMAIL_RE = java.util.regex.Pattern.compile(
+            "^[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$");
+
     @PostMapping("/{id}/rent/lookup")
     public String lookupCustomerForRental(HttpSession session,
                                           @PathVariable Integer id,
@@ -114,7 +117,15 @@ public class MovieController {
         String token = (String) session.getAttribute("token");
         if (token == null) return "redirect:/login";
 
-        CustomerResponseDto customer = customerService.findCustomerByEmail(token, email);
+        String trimmed = email == null ? "" : email.trim();
+        if (!EMAIL_RE.matcher(trimmed).matches()) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Please enter a valid email address (e.g. mary@example.com).");
+            redirectAttributes.addFlashAttribute("prefillEmail", trimmed);
+            return "redirect:/movies/" + id + "/rent";
+        }
+
+        CustomerResponseDto customer = customerService.findCustomerByEmail(token, trimmed);
 
         if (customer == null) {
             // Stay on the rent page, show inline add-customer form prefilled with email
@@ -128,6 +139,9 @@ public class MovieController {
     }
 
     // Create a customer inline during the rental flow and continue to payment.
+    // Customer is ALWAYS scoped to the logged-in staff's store; we ignore any
+    // storeId the form might send so a staff at store 2 can't accidentally
+    // create a customer in store 1 (and lose visibility of them).
     @PostMapping("/{id}/rent/create-customer")
     public String createCustomerForRental(HttpSession session,
                                           @PathVariable Integer id,
@@ -135,6 +149,11 @@ public class MovieController {
                                           RedirectAttributes redirectAttributes) {
         String token = (String) session.getAttribute("token");
         if (token == null) return "redirect:/login";
+
+        Integer staffStoreId = (Integer) session.getAttribute("storeId");
+        if (staffStoreId != null) {
+            customerRequest.setStoreId(staffStoreId);
+        }
 
         try {
             String newCustomerId = customerService.createCustomer(token, customerRequest);

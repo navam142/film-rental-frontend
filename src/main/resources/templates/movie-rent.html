@@ -63,8 +63,10 @@
                     <div class="form-group">
                         <label for="email">Customer Email</label>
                         <input type="email" id="email" name="email" class="form-control"
-                               placeholder="e.g. mary@example.com" required
+                               required maxlength="50"
                                th:value="${prefillEmail}"
+                               pattern="^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$"
+                               title="Enter a valid email address (e.g. mary@example.com)"
                                style="font-size:1.05rem;padding:1rem;"/>
                     </div>
                     <button type="submit" class="btn btn-primary btn-block" style="margin-top:1rem;padding:1rem;">
@@ -108,16 +110,15 @@
                         <div class="form-group">
                             <label>Email</label>
                             <input type="email" class="form-control" th:field="*{email}" th:value="${prefillEmail}"
-                                   required maxlength="50"/>
+                                   required maxlength="50"
+                                   pattern="^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$"
+                                   title="Enter a valid email address (e.g. mary@example.com)"/>
                         </div>
-                        <div class="form-group">
-                            <label>Store</label>
-                            <select class="form-control" th:field="*{storeId}" required>
-                                <option value="">Select store</option>
-                                <option value="1">Store #1</option>
-                                <option value="2">Store #2</option>
-                            </select>
-                        </div>
+                        <!-- Store is auto-assigned to the logged-in staff's store
+                             on the backend (MovieController.createCustomerForRental).
+                             We still send it as a hidden field for the @NotNull validator. -->
+                        <input type="hidden" th:field="*{storeId}"
+                               th:value="${session != null ? session.storeId : 1}"/>
                     </div>
 
                     <!-- Address -->

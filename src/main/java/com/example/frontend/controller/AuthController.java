@@ -47,6 +47,9 @@ public class AuthController {
             if (response.getStaffId() != null) {
                 session.setAttribute("staffId", response.getStaffId());
             }
+            if (response.getStoreId() != null) {
+                session.setAttribute("storeId", response.getStoreId());
+            }
             log.info("User {} logged in", response.getUsername());
             return "redirect:/dashboard";
         } catch (Exception e) {
